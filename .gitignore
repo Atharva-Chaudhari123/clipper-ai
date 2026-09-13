@@ -1,0 +1,53 @@
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environments
+.env
+.venv
+venv/
+ENV/
+env/
+
+# Test & coverage caches
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs & temporary files
+*.log
+
+# Media and video binaries
+*.mp4
+*.avi
+*.mkv
+*.mov
+*.webm
+*.wav
+*.m4a
+
+# Raw video dataset files & extracted frame image caches (too large for git)
+video/
+data/processed/frames/
+data/processed/temp_audio/
+
+# Ignore user uploads and runtime outputs (preserve folder structure with .gitkeep)
+uploads/*
+!uploads/.gitkeep
+
+web_outputs/*
+!web_outputs/.gitkeep
+
+outputs/*
+!outputs/.gitkeep
+
+data/youtube_downloads/*
+!data/youtube_downloads/.gitkeep
+
+# OS / Editor artifacts
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

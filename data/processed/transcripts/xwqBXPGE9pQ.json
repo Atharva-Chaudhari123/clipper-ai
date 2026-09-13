@@ -1,0 +1,247 @@
+{
+  "language": "en",
+  "segments": [
+    {
+      "start": 0.0,
+      "end": 7.52,
+      "text": "We're taking smartphone, spaceship, technology on a motorcycle platform with a safety"
+    },
+    {
+      "start": 7.52,
+      "end": 9.02,
+      "text": "of a car."
+    },
+    {
+      "start": 9.02,
+      "end": 12.56,
+      "text": "Basically it's a robot motorcycle."
+    },
+    {
+      "start": 12.56,
+      "end": 18.84,
+      "text": "It self bounces and it really increases your safety and your range and the excitement"
+    },
+    {
+      "start": 18.84,
+      "end": 20.68,
+      "text": "of riding a motorcycle."
+    },
+    {
+      "start": 20.68,
+      "end": 29.0,
+      "text": "200 miles per charge, it's a two wheel drive, wheel hub motor, electric vehicle."
+    },
+    {
+      "start": 29.0,
+      "end": 30.72,
+      "text": "Here it's like a car."
+    },
+    {
+      "start": 30.72,
+      "end": 32.0,
+      "text": "You sit in it like a car."
+    },
+    {
+      "start": 32.0,
+      "end": 33.88,
+      "text": "You have pedals like a car."
+    },
+    {
+      "start": 33.88,
+      "end": 41.28,
+      "text": "But the robot side, it takes your steering input and leans you into turns a lot like a jet"
+    },
+    {
+      "start": 41.28,
+      "end": 44.04,
+      "text": "fighter."
+    },
+    {
+      "start": 44.04,
+      "end": 50.18,
+      "text": "So as you can see full electronics in here."
+    },
+    {
+      "start": 50.18,
+      "end": 53.36,
+      "text": "And this is actually a real gyro right here, if you want to take a look at this."
+    },
+    {
+      "start": 53.36,
+      "end": 59.92,
+      "text": "The gyro scope inside basically output around 1,300 pounds of torque."
+    },
+    {
+      "start": 59.92,
+      "end": 63.28,
+      "text": "So you basically need a baby elf into knock it over."
+    },
+    {
+      "start": 63.28,
+      "end": 67.92,
+      "text": "It's a lot like a CMG or control moment gyro."
+    },
+    {
+      "start": 67.92,
+      "end": 74.48,
+      "text": "The International Space Station and most satellites use the same orientation technology."
+    },
+    {
+      "start": 74.48,
+      "end": 77.92,
+      "text": "We've just kind of taken that and made it commercially available."
+    },
+    {
+      "start": 77.92,
+      "end": 82.12,
+      "text": "There are servos and there are gyro motors, there are traction motors."
+    },
+    {
+      "start": 82.12,
+      "end": 90.68,
+      "text": "But sensors like an IMU, IR sensors, there is actually a lot of temperature and heat sensors,"
+    },
+    {
+      "start": 90.68,
+      "end": 96.24,
+      "text": "a myriad of sensors actually all feed data that has to be processed."
+    },
+    {
+      "start": 96.24,
+      "end": 102.44,
+      "text": "And through that process, a command to the gyros to tilt and lean the vehicle to keep"
+    },
+    {
+      "start": 102.44,
+      "end": 109.8,
+      "text": "it balanced or either to lean into a turn, it's very dependent based on our processing"
+    },
+    {
+      "start": 109.8,
+      "end": 111.6,
+      "text": "system."
+    },
+    {
+      "start": 111.6,
+      "end": 117.0,
+      "text": "The prototype that we have now uses two i7s at our end product we should be using something"
+    },
+    {
+      "start": 117.0,
+      "end": 119.72,
+      "text": "that would power a smart phone today."
+    },
+    {
+      "start": 119.72,
+      "end": 124.68,
+      "text": "What the hurdles in our development is having the vehicle actually be more aware of its surroundings."
+    },
+    {
+      "start": 124.68,
+      "end": 131.52,
+      "text": "So it's kind of like putting AI but also having good sensory perception of the road of"
+    },
+    {
+      "start": 131.52,
+      "end": 138.84,
+      "text": "any kind of external influences or disturbances and having that all get computed and processed"
+    },
+    {
+      "start": 138.84,
+      "end": 143.24,
+      "text": "to allow for stability in all scenarios."
+    },
+    {
+      "start": 143.24,
+      "end": 148.6,
+      "text": "On the heads up display you can see battery life range, how much left you have in your"
+    },
+    {
+      "start": 148.6,
+      "end": 154.56,
+      "text": "procession budget, it's kind of like your artificial horizon."
+    },
+    {
+      "start": 154.56,
+      "end": 159.4,
+      "text": "And also it's basically a rolling smart phone so all of the information on your smart phone"
+    },
+    {
+      "start": 159.4,
+      "end": 161.16,
+      "text": "will be on a side panel."
+    },
+    {
+      "start": 161.16,
+      "end": 166.72,
+      "text": "I mean upgrading the hardware, the gyro can be done pretty easily."
+    },
+    {
+      "start": 166.72,
+      "end": 170.72,
+      "text": "The gyro is actually coming, the battery pack coming in its own modular unit."
+    },
+    {
+      "start": 170.72,
+      "end": 176.44,
+      "text": "So you can upgrade the gyro output, you can upgrade the battery size or both."
+    },
+    {
+      "start": 176.44,
+      "end": 184.52,
+      "text": "So if you want a faster, more robust, more stabilized, C1, it's pretty easy to upgrade that."
+    },
+    {
+      "start": 184.52,
+      "end": 186.56,
+      "text": "The chassis is made out of steel."
+    },
+    {
+      "start": 186.56,
+      "end": 191.92,
+      "text": "We could be using some kind of composite body for the interior as well."
+    },
+    {
+      "start": 191.92,
+      "end": 198.64,
+      "text": "It's count where one tenth of a car, cars typically have around 24,000 parts."
+    },
+    {
+      "start": 198.64,
+      "end": 201.48,
+      "text": "If you drive an Audi, it's 40,000."
+    },
+    {
+      "start": 201.48,
+      "end": 205.36,
+      "text": "We only have 2,239."
+    },
+    {
+      "start": 205.36,
+      "end": 210.2,
+      "text": "So it's a pretty easy to make a factor, that's why we can make it affordable."
+    },
+    {
+      "start": 210.2,
+      "end": 216.32,
+      "text": "In our audience, urban professionals, tech junkies, they have to have the first thing."
+    },
+    {
+      "start": 216.32,
+      "end": 218.92,
+      "text": "They commute, they have professional life."
+    },
+    {
+      "start": 218.92,
+      "end": 223.92,
+      "text": "They still want to have fun and they want to have the first best thing, but at affordable"
+    },
+    {
+      "start": 223.92,
+      "end": 224.36,
+      "text": "price."
+    }
+  ],
+  "full_text": "We're taking smartphone, spaceship, technology on a motorcycle platform with a safety of a car. Basically it's a robot motorcycle. It self bounces and it really increases your safety and your range and the excitement of riding a motorcycle. 200 miles per charge, it's a two wheel drive, wheel hub motor, electric vehicle. Here it's like a car. You sit in it like a car. You have pedals like a car. But the robot side, it takes your steering input and leans you into turns a lot like a jet fighter. So as you can see full electronics in here. And this is actually a real gyro right here, if you want to take a look at this. The gyro scope inside basically output around 1,300 pounds of torque. So you basically need a baby elf into knock it over. It's a lot like a CMG or control moment gyro. The International Space Station and most satellites use the same orientation technology. We've just kind of taken that and made it commercially available. There are servos and there are gyro motors, there are traction motors. But sensors like an IMU, IR sensors, there is actually a lot of temperature and heat sensors, a myriad of sensors actually all feed data that has to be processed. And through that process, a command to the gyros to tilt and lean the vehicle to keep it balanced or either to lean into a turn, it's very dependent based on our processing system. The prototype that we have now uses two i7s at our end product we should be using something that would power a smart phone today. What the hurdles in our development is having the vehicle actually be more aware of its surroundings. So it's kind of like putting AI but also having good sensory perception of the road of any kind of external influences or disturbances and having that all get computed and processed to allow for stability in all scenarios. On the heads up display you can see battery life range, how much left you have in your procession budget, it's kind of like your artificial horizon. And also it's basically a rolling smart phone so all of the information on your smart phone will be on a side panel. I mean upgrading the hardware, the gyro can be done pretty easily. The gyro is actually coming, the battery pack coming in its own modular unit. So you can upgrade the gyro output, you can upgrade the battery size or both. So if you want a faster, more robust, more stabilized, C1, it's pretty easy to upgrade that. The chassis is made out of steel. We could be using some kind of composite body for the interior as well. It's count where one tenth of a car, cars typically have around 24,000 parts. If you drive an Audi, it's 40,000. We only have 2,239. So it's a pretty easy to make a factor, that's why we can make it affordable. In our audience, urban professionals, tech junkies, they have to have the first thing. They commute, they have professional life. They still want to have fun and they want to have the first best thing, but at affordable price.",
+  "has_speech": true
+}

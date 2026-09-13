@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Automatic Video Highlight Detection & Short Video Generation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+  <header>
+    <div class="nav-container">
+      <a href="/" class="logo-group">
+        <div class="logo-icon">▶</div>
+        <div class="logo-text">
+          <h1>HighlightAI</h1>
+        </div>
+      </a>
+      <span class="logo-badge">ResNet-50 + Whisper + BiLSTM</span>
+    </div>
+  </header>
+
+  <main>
+    <!-- Flash Notifications -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-container">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">
+              <span>{{ message }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% if error_message %}
+      <div class="alert alert-danger">
+        <span>{{ error_message }}</span>
+      </div>
+    {% endif %}
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+      <h1 class="hero-title">Automatic Video Highlight Detection</h1>
+      <p class="hero-subtitle">
+        AI-powered video highlight generation analyzing visual features and spoken speech transcripts.
+      </p>
+      <div class="tech-badges">
+        <span class="tech-pill">PyTorch CUDA</span>
+        <span class="tech-pill">Pretrained ResNet-50</span>
+        <span class="tech-pill">OpenAI Whisper</span>
+        <span class="tech-pill">MiniLM-L6-v2 Embeddings</span>
+        <span class="tech-pill">Multimodal BiLSTM</span>
+        <span class="tech-pill">yt-dlp YouTube</span>
+      </div>
+    </section>
+
+    <!-- Upload & Options Form Card -->
+    <div class="card">
+      <form id="highlightForm" action="/upload" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="upload_type" id="uploadType" value="file">
+        
+        <!-- Source Selection Tabs -->
+        <div class="source-tabs">
+          <button type="button" class="tab-btn active" id="tabUploadBtn" onclick="switchSourceTab('file')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+              <line x1="7" y1="2" x2="7" y2="22"></line>
+              <line x1="17" y1="2" x2="17" y2="22"></line>
+              <line x1="2" y1="12" x2="22" y2="12"></line>
+            </svg>
+            Upload Local Video
+          </button>
+
+          <button type="button" class="tab-btn" id="tabYoutubeBtn" onclick="switchSourceTab('youtube')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+            </svg>
+            Paste YouTube URL
+          </button>
+        </div>
+
+        <!-- 1. Video File Dropzone Panel -->
+        <div id="fileUploadPanel" class="input-panel">
+          <div class="dropzone-container" id="dropzone">
+            <input type="file" name="video_file" id="videoFile" class="file-input" accept=".mp4">
+            <div class="upload-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+            </div>
+            <p class="upload-text-main">Click to browse or drag & drop video</p>
+            <p class="upload-text-sub">Supported format: MP4 (H.264/AAC) • Max file size: 500 MB</p>
+          </div>
+
+          <!-- Selected File Banner -->
+          <div class="selected-file-banner" id="selectedFileBanner" style="display: none;">
+            <div>
+              <span style="color: var(--text-muted); margin-right: 0.5rem;">Selected File:</span>
+              <span class="selected-filename" id="selectedFileName">video.mp4</span>
+            </div>
+            <span style="color: var(--accent-emerald); font-weight: 600;">Ready</span>
+          </div>
+        </div>
+
+        <!-- 2. YouTube Input Panel -->
+        <div id="youtubePanel" class="input-panel" style="display: none;">
+          <div class="youtube-input-group">
+            <label for="youtubeUrl" class="section-label" style="margin-bottom: 0.5rem;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+              </svg>
+              YouTube Video Link
+            </label>
+            <input 
+              type="url" 
+              name="youtube_url" 
+              id="youtubeUrl" 
+              class="text-input" 
+              placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+              autocomplete="off"
+            >
+            <p class="input-hint">
+              Supports standard YouTube links (<code>youtube.com/watch?v=...</code>), shortened links (<code>youtu.be/...</code>), and Shorts (<code>youtube.com/shorts/...</code>). Max length: 30 minutes.
+            </p>
+          </div>
+        </div>
+
+        <!-- Analysis Mode Selector -->
+        <div class="mode-group" style="margin-top: 2rem;">
+          <div class="section-label">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            Analysis Mode
+        <!-- Output Mode Selector -->
+        <div class="mode-group" style="margin-top: 2rem;">
+          <div class="section-label">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+              <line x1="7" y1="2" x2="7" y2="22"></line>
+              <line x1="17" y1="2" x2="17" y2="22"></line>
+            </svg>
+            Output Format
+          </div>
+
+          <div class="mode-options">
+            <!-- Multi-Reels (Default) -->
+            <label class="mode-card">
+              <input type="radio" name="output_mode" value="reels" checked onchange="switchOutputMode('reels')">
+              <div class="mode-box">
+                <div class="mode-header">
+                  <span class="mode-title">Multiple Short Reels (9:16)</span>
+                  <span class="badge-recommended">New &bull; Phase 13</span>
+                </div>
+                <div class="mode-desc">
+                  Generates multiple vertical clips optimized for YouTube Shorts, Reels, and TikTok with candidate-only faster-whisper.
+                </div>
+              </div>
+            </label>
+
+            <!-- Single Summary -->
+            <label class="mode-card">
+              <input type="radio" name="output_mode" value="single" onchange="switchOutputMode('single')">
+              <div class="mode-box">
+                <div class="mode-header">
+                  <span class="mode-title">Single Highlight Summary</span>
+                </div>
+                <div class="mode-desc">
+                  Stitches all top-scoring intervals into a single concatenated summary video under a duration budget.
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Multi-Reels Options Panel -->
+        <div id="multiReelOptionsPanel" style="margin-top: 2rem;">
+          
+          <!-- Number of Reels -->
+          <div class="sub-options-row" style="margin-bottom: 1.5rem;">
+            <div class="section-label" style="font-size: 0.92rem; margin-bottom: 0.5rem;">Number of Reels</div>
+            <div class="pill-selector">
+              <label class="pill-btn"><input type="radio" name="num_reels" value="auto" checked><span>Auto</span></label>
+              <label class="pill-btn"><input type="radio" name="num_reels" value="3"><span>3 Reels</span></label>
+              <label class="pill-btn"><input type="radio" name="num_reels" value="5"><span>5 Reels</span></label>
+              <label class="pill-btn"><input type="radio" name="num_reels" value="10"><span>10 Reels</span></label>
+            </div>
+          </div>
+
+          <!-- Reel Length -->
+          <div class="sub-options-row" style="margin-bottom: 1.5rem;">
+            <div class="section-label" style="font-size: 0.92rem; margin-bottom: 0.5rem;">Target Reel Length</div>
+            <div class="pill-selector">
+              <label class="pill-btn"><input type="radio" name="reel_length" value="15-30"><span>15–30s</span></label>
+              <label class="pill-btn"><input type="radio" name="reel_length" value="30-60" checked><span>30–60s (Default)</span></label>
+              <label class="pill-btn"><input type="radio" name="reel_length" value="60-90"><span>60–90s</span></label>
+              <label class="pill-btn"><input type="radio" name="reel_length" value="auto"><span>Auto</span></label>
+            </div>
+          </div>
+
+          <!-- Aspect Ratio & Captions Grid -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div>
+              <div class="section-label" style="font-size: 0.92rem; margin-bottom: 0.5rem;">Aspect Ratio</div>
+              <div class="pill-selector">
+                <label class="pill-btn"><input type="radio" name="aspect_ratio" value="9:16" checked><span>9:16 Vertical</span></label>
+                <label class="pill-btn"><input type="radio" name="aspect_ratio" value="16:9"><span>16:9 Original</span></label>
+              </div>
+            </div>
+
+            <div>
+              <div class="section-label" style="font-size: 0.92rem; margin-bottom: 0.5rem;">Burned-In Captions</div>
+              <div class="pill-selector">
+                <label class="pill-btn"><input type="radio" name="captions" value="on" checked><span>ON</span></label>
+                <label class="pill-btn"><input type="radio" name="captions" value="off"><span>OFF</span></label>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Single Summary Budget Selector (Hidden by default when in multi-reel mode) -->
+        <div id="singleSummaryBudgetPanel" class="budget-group" style="display: none; margin-top: 2rem;">
+          <div class="section-label">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            Highlight Duration Budget
+          </div>
+
+          <div class="budget-options">
+            <label class="budget-card">
+              <input type="radio" name="budget" value="10">
+              <div class="budget-box">
+                <div class="budget-pct">10%</div>
+                <div class="budget-desc">Ultra-concise highlight reel</div>
+              </div>
+            </label>
+
+            <label class="budget-card">
+              <input type="radio" name="budget" value="15" checked>
+              <div class="budget-box">
+                <div class="budget-pct">15%</div>
+                <div class="budget-desc">Standard balanced summary</div>
+              </div>
+            </label>
+
+            <label class="budget-card">
+              <input type="radio" name="budget" value="20">
+              <div class="budget-box">
+                <div class="budget-pct">20%</div>
+                <div class="budget-desc">Extended highlights</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Analysis Mode Selector -->
+        <div class="mode-group" style="margin-top: 2rem;">
+          <div class="section-label">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            Analysis Mode
+          </div>
+
+          <div class="mode-options">
+            <!-- Multimodal (Recommended) -->
+            <label class="mode-card">
+              <input type="radio" name="mode" value="multimodal" checked>
+              <div class="mode-box">
+                <div class="mode-header">
+                  <span class="mode-title">Visual + Speech (Multimodal)</span>
+                  <span class="badge-recommended">Recommended</span>
+                </div>
+                <div class="mode-desc">
+                  Combines ResNet-50 visual features with candidate-only faster-whisper speech transcript embeddings (MiniLM-L6-v2).
+                </div>
+              </div>
+            </label>
+
+            <!-- Baseline Visual-Only -->
+            <label class="mode-card">
+              <input type="radio" name="mode" value="baseline">
+              <div class="mode-box">
+                <div class="mode-header">
+                  <span class="mode-title">Visual Analysis Only (Baseline)</span>
+                </div>
+                <div class="mode-desc">
+                  Uses pretrained ResNet-50 2048-D visual features and the verified baseline Bidirectional LSTM model.
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" id="submitBtn" class="btn-primary" style="margin-top: 2.5rem;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          <span id="submitBtnText">Generate Reels (9:16)</span>
+        </button>
+
+      </form>
+    </div>
+  </main>
+
+  <footer>
+    <p>Automatic Video Highlight Detection & Short Video Generation • ResNet-50 + Whisper + BiLSTM</p>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Processing Video — HighlightAI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+  <header>
+    <div class="nav-container">
+      <a href="/" class="logo-group">
+        <div class="logo-icon">▶</div>
+        <div class="logo-text">
+          <h1>HighlightAI</h1>
+        </div>
+      </a>
+      <span class="logo-badge">Processing Video</span>
+    </div>
+  </header>
+
+  <main>
+    <div class="card processing-card" id="processingPoller" data-job-id="{{ job_id }}">
+      
+      <!-- Spinner -->
+      <div class="spinner-outer"></div>
+
+      <h2 style="font-size: 1.75rem; font-weight: 800; margin-bottom: 0.5rem;">
+        Processing your video...
+      </h2>
+      <p id="stageStatusText" style="color: var(--accent-cyan); font-size: 1.05rem; font-weight: 500;">
+        Initializing pipeline...
+      </p>
+
+      <!-- Stage List (11 Real Processing Stages) -->
+      <div class="stage-list">
+        <div class="stage-item" id="stage-0">
+          <div class="stage-indicator">1</div>
+          <span>Getting YouTube video</span>
+        </div>
+
+        <div class="stage-item" id="stage-1">
+          <div class="stage-indicator">2</div>
+          <span>Fast video analysis (ResNet-50)</span>
+        </div>
+
+        <div class="stage-item" id="stage-2">
+          <div class="stage-indicator">3</div>
+          <span>Detecting speech activity (RMS Energy)</span>
+        </div>
+
+        <div class="stage-item" id="stage-3">
+          <div class="stage-indicator">4</div>
+          <span>Finding candidate moments</span>
+        </div>
+
+        <div class="stage-item" id="stage-4">
+          <div class="stage-indicator">5</div>
+          <span>Transcribing selected moments (faster-whisper)</span>
+        </div>
+
+        <div class="stage-item" id="stage-5">
+          <div class="stage-indicator">6</div>
+          <span>Understanding candidate speech (MiniLM)</span>
+        </div>
+
+        <div class="stage-item" id="stage-6">
+          <div class="stage-indicator">7</div>
+          <span>Ranking important moments (Bi-LSTM)</span>
+        </div>
+
+        <div class="stage-item" id="stage-7">
+          <div class="stage-indicator">8</div>
+          <span>Creating multiple reels (Sentence-snapping & NMS)</span>
+        </div>
+
+        <div class="stage-item" id="stage-8">
+          <div class="stage-indicator">9</div>
+          <span>Converting to 9:16 (Center crop)</span>
+        </div>
+
+        <div class="stage-item" id="stage-9">
+          <div class="stage-indicator">10</div>
+          <span>Adding captions (Burned-in subtitles)</span>
+        </div>
+
+        <div class="stage-item" id="stage-10">
+          <div class="stage-indicator">11</div>
+          <span>Finalizing reels & manifest</span>
+        </div>
+      </div>
+
+      <!-- Error Message Container -->
+      <div id="errorMessageContainer" style="display: none; margin-top: 2rem;"></div>
+
+    </div>
+  </main>
+
+  <footer>
+    <p>Automatic Video Highlight Detection & Short Video Generation • ResNet-50 + Whisper + BiLSTM</p>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

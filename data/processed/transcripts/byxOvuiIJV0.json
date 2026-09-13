@@ -1,0 +1,52 @@
+{
+  "language": "en",
+  "segments": [
+    {
+      "start": 0.0,
+      "end": 9.0,
+      "text": "Welcome to the biggest blockbuster event of the year."
+    },
+    {
+      "start": 9.0,
+      "end": 12.0,
+      "text": "ICC World T20 2014."
+    },
+    {
+      "start": 12.0,
+      "end": 14.0,
+      "text": "Are you ready to roll?"
+    },
+    {
+      "start": 60.0,
+      "end": 63.0,
+      "text": "ICC World T20 2014."
+    },
+    {
+      "start": 90.0,
+      "end": 93.0,
+      "text": "ICC World T20 2014."
+    },
+    {
+      "start": 93.0,
+      "end": 96.0,
+      "text": "ICC World T20 2014."
+    },
+    {
+      "start": 96.0,
+      "end": 99.0,
+      "text": "ICC World T20 2014."
+    },
+    {
+      "start": 120.0,
+      "end": 123.0,
+      "text": "ICC World T20 2014."
+    },
+    {
+      "start": 150.0,
+      "end": 153.0,
+      "text": "ICC World T20 2014."
+    }
+  ],
+  "full_text": "Welcome to the biggest blockbuster event of the year. ICC World T20 2014. Are you ready to roll? ICC World T20 2014. ICC World T20 2014. ICC World T20 2014. ICC World T20 2014. ICC World T20 2014. ICC World T20 2014.",
+  "has_speech": true
+}

@@ -1,0 +1,29 @@
+# Core PyTorch and Computer Vision
+torch>=2.0.0
+torchvision>=0.15.0
+torchaudio>=2.0.0
+opencv-python>=4.8.0
+Pillow>=9.5.0
+
+# Scientific Computing & Plotting
+numpy>=1.23.0
+scipy>=1.10.0
+matplotlib>=3.7.0
+
+# Flask Web Application & Serving
+Flask>=3.0.0
+Werkzeug>=3.0.0
+
+# Video & Audio Acquisition / Speech Recognition
+yt-dlp>=2023.7.0
+faster-whisper>=1.0.0
+ctranslate2>=4.0.0
+openai-whisper>=20230314
+
+# Text Embeddings & NLP
+sentence-transformers>=2.2.0
+transformers>=4.30.0
+
+# Utilities & Testing
+tqdm>=4.65.0
+pytest>=7.0.0
