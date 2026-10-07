@@ -165,7 +165,8 @@ def select_multiple_reels(
     num_reels_option: str = "auto",     # "auto", "3", "5", "10"
     quality_threshold: float = 0.20,
     multimodal_model_path: str = "models/best_multimodal_bilstm.pt",
-    visual_sample_interval: float = 2.0
+    visual_sample_interval: float = 2.0,
+    gemini_api_key: Optional[str] = None
 ) -> List[Dict[str, Any]]:
     """
     Ranks candidates, applies NMS, snaps to sentence boundaries, and outputs curated Reels.
@@ -272,13 +273,26 @@ def select_multiple_reels(
     # Sort selected reels chronologically for clean presentation
     selected.sort(key=lambda x: x["start_sec"])
 
-    # Format timestamps
+    # Format timestamps and enrich with LLM/NLP virality scoring
+    from src.virality_llm import analyze_clip_virality
+
     for i, reel in enumerate(selected):
         reel["reel_num"] = i + 1
         s_min, s_sec = int(reel["start_sec"] // 60), int(reel["start_sec"] % 60)
         e_min, e_sec = int(reel["end_sec"] // 60), int(reel["end_sec"] % 60)
         reel["start_formatted"] = f"{s_min:02d}:{s_sec:02d}"
         reel["end_formatted"] = f"{e_min:02d}:{e_sec:02d}"
+
+        # Analyze virality, catchy title, and hook sentence
+        virality_data = analyze_clip_virality(
+            transcript_text=reel.get("transcript", ""),
+            duration_sec=reel["duration_sec"],
+            api_key=gemini_api_key
+        )
+        reel["title"] = virality_data["title"]
+        reel["viral_score"] = virality_data["viral_score"]
+        reel["hook_sentence"] = virality_data["hook_sentence"]
+        reel["virality_reason"] = virality_data["virality_reason"]
 
     logger.info(f"Selected {len(selected)} high-quality Reels (target was {max_desired}).")
     return selected

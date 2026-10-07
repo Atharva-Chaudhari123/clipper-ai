@@ -1,11 +1,12 @@
 """
 src/reel_renderer.py
 --------------------
-Phase 13: 9:16 Vertical Video Renderer with Optional Burned-In Captions.
+Phase 13: 9:16 Vertical Video Renderer with Face-Aware Tracking & Styled Captions.
 
-Extracts selected Reels from source video, crops landscape video to 9:16 vertical
-aspect ratio (1080x1920), aligns subtitle timestamps relative to reel start,
-burns in styled subtitles via FFmpeg, and writes reel_01.mp4 ... reel_N.mp4 and manifest.json.
+Extracts selected Reels from source video, reframes landscape video to 9:16 vertical
+aspect ratio (1080x1920) using Smart Face Tracking or clean center-crop fallback,
+aligns subtitle timestamps relative to reel start, burns in styled subtitles,
+and writes reel_01.mp4 ... reel_N.mp4 and manifest.json.
 """
 
 import os
@@ -20,11 +21,31 @@ setup_utf8_environment()
 
 logger = logging.getLogger("ReelRenderer")
 
+# Discover FFmpeg executable across environment or known locations
+import shutil
+FFMPEG_BIN = shutil.which("ffmpeg") or "ffmpeg"
+for candidate in [
+    os.path.expandvars(r"%LOCALAPPDATA%\Microsoft\WinGet\Links\ffmpeg.exe"),
+    r"C:\pinokio\bin\miniconda\Library\bin\ffmpeg.exe"
+]:
+    if os.path.isfile(candidate):
+        FFMPEG_BIN = candidate
+        break
+
+FFPROBE_BIN = shutil.which("ffprobe") or "ffprobe"
+for candidate in [
+    os.path.expandvars(r"%LOCALAPPDATA%\Microsoft\WinGet\Links\ffprobe.exe"),
+    r"C:\pinokio\bin\miniconda\Library\bin\ffprobe.exe"
+]:
+    if os.path.isfile(candidate):
+        FFPROBE_BIN = candidate
+        break
+
 
 def probe_video_dimensions(video_path: str) -> Dict[str, int]:
-    """Probes video width and height using ffprobe."""
+    """Probes video width and height using ffprobe or OpenCV fallback."""
     cmd = [
-        "ffprobe", "-v", "error",
+        FFPROBE_BIN, "-v", "error",
         "-select_streams", "v:0",
         "-show_entries", "stream=width,height",
         "-of", "json",
@@ -43,8 +64,19 @@ def probe_video_dimensions(video_path: str) -> Dict[str, int]:
         data = json.loads(res.stdout)
         stream = data["streams"][0]
         return {"width": int(stream["width"]), "height": int(stream["height"])}
-    except Exception as e:
-        logger.warning(f"Could not probe video dimensions ({str(e)}). Defaulting to 1920x1080.")
+    except Exception:
+        # Fallback to OpenCV
+        try:
+            import cv2
+            cap = cv2.VideoCapture(video_path)
+            if cap.isOpened():
+                w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+                h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+                cap.release()
+                if w > 0 and h > 0:
+                    return {"width": w, "height": h}
+        except Exception:
+            pass
         return {"width": 1920, "height": 1080}
 
 
@@ -100,7 +132,132 @@ def generate_reel_srt(
     return count > 1
 
 
-def render_single_reel(
+def render_single_reel_smart(
+    source_video_path: str,
+    start_sec: float,
+    duration_sec: float,
+    output_path: str,
+    aspect_ratio: str = "9:16",
+    speech_segments: Optional[List[Dict[str, Any]]] = None,
+    captions: bool = True,
+    use_face_tracking: bool = True
+) -> Dict[str, Any]:
+    """
+    Renders an individual reel using Smart Face Tracking with OpenCV or standard FFmpeg crop.
+    """
+    os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
+
+    # If landscape and face tracking is enabled, attempt smart OpenCV camera tracking
+    if aspect_ratio == "9:16" and use_face_tracking:
+        try:
+            from src.face_tracker import SmartFaceTracker
+            import cv2
+
+            cap = cv2.VideoCapture(source_video_path)
+            if cap.isOpened():
+                src_w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+                src_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+                fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
+
+                if src_w > src_h:  # Landscape video
+                    logger.info(f"Applying Smart Face Tracking for Reel [{start_sec:.1f}s - {start_sec + duration_sec:.1f}s]...")
+                    start_frame = int(round(start_sec * fps))
+                    total_frames = int(round(duration_sec * fps))
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
+
+                    tracker = SmartFaceTracker(smoothing=0.15)
+                    silent_temp = output_path + ".temp_silent.mp4"
+                    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+
+                    # Target 9:16 dimensions
+                    crop_h = src_h
+                    crop_w = int(round(src_h * (9.0 / 16.0)))
+                    crop_w = max(2, crop_w - (crop_w % 2))
+                    crop_h = max(2, crop_h - (crop_h % 2))
+
+                    writer = cv2.VideoWriter(silent_temp, fourcc, fps, (1080, 1920))
+                    frames_written = 0
+
+                    while frames_written < total_frames:
+                        ret, frame = cap.read()
+                        if not ret or frame is None:
+                            break
+
+                        x0, y0, cw, ch = tracker.compute_crop_box(frame, target_aspect_ratio="9:16")
+                        cropped = frame[y0:y0 + ch, x0:x0 + cw]
+                        resized = cv2.resize(cropped, (1080, 1920), interpolation=cv2.INTER_LINEAR)
+                        writer.write(resized)
+                        frames_written += 1
+
+                    cap.release()
+                    writer.release()
+
+                    if frames_written > 0 and os.path.isfile(silent_temp):
+                        # Mux audio and burn subtitles
+                        srt_path = None
+                        vf_filters = []
+                        if captions and speech_segments:
+                            srt_path = output_path.replace(".mp4", ".srt")
+                            if generate_reel_srt(speech_segments, start_sec, start_sec + duration_sec, srt_path):
+                                escaped_srt = srt_path.replace("\\", "/").replace(":", "\\:")
+                                # TikTok/Reels high-impact subtitle styling: Yellow font, bold black outline, centered at lower-third
+                                sub_style = "FontName=Arial,FontSize=28,Bold=1,PrimaryColour=&H0000FFFF,OutlineColour=&H00000000,BorderStyle=1,Outline=3,Shadow=2,Alignment=2,MarginV=120"
+                                vf_filters.append(f"subtitles='{escaped_srt}':force_style='{sub_style}'")
+
+                        mux_cmd = [
+                            FFMPEG_BIN, "-y",
+                            "-i", silent_temp,
+                            "-ss", str(start_sec),
+                            "-i", source_video_path,
+                            "-t", str(duration_sec),
+                            "-map", "0:v:0",
+                            "-map", "1:a:0?",
+                            "-c:v", "libx264", "-preset", "fast", "-crf", "22",
+                            "-c:a", "aac", "-b:a", "128k",
+                            "-shortest"
+                        ]
+                        if vf_filters:
+                            mux_cmd.extend(["-vf", ",".join(vf_filters)])
+                        mux_cmd.append(output_path)
+
+                        res_mux = subprocess.run(mux_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+                        if os.path.isfile(silent_temp):
+                            try:
+                                os.remove(silent_temp)
+                            except OSError:
+                                pass
+                        if srt_path and os.path.isfile(srt_path):
+                            try:
+                                os.remove(srt_path)
+                            except OSError:
+                                pass
+
+                        if res_mux.returncode == 0 and os.path.isfile(output_path):
+                            file_size_bytes = os.path.getsize(output_path)
+                            return {
+                                "output_path": output_path,
+                                "file_size_bytes": file_size_bytes,
+                                "file_size_mb": round(file_size_bytes / (1024 * 1024), 2)
+                            }
+        except Exception as e:
+            logger.warning(f"Smart Face Tracking encountered an issue ({e}). Falling back to FFmpeg center crop.")
+
+    # Standard FFmpeg fallback render
+    return _render_ffmpeg_crop(
+        source_video_path=source_video_path,
+        start_sec=start_sec,
+        duration_sec=duration_sec,
+        output_path=output_path,
+        aspect_ratio=aspect_ratio,
+        speech_segments=speech_segments,
+        captions=captions
+    )
+
+
+render_single_reel = render_single_reel_smart
+
+
+def _render_ffmpeg_crop(
     source_video_path: str,
     start_sec: float,
     duration_sec: float,
@@ -109,28 +266,21 @@ def render_single_reel(
     speech_segments: Optional[List[Dict[str, Any]]] = None,
     captions: bool = True
 ) -> Dict[str, Any]:
-    """
-    Renders an individual reel using FFmpeg.
-    """
+    """Fallback FFmpeg center-crop rendering."""
     dims = probe_video_dimensions(source_video_path)
     w, h = dims["width"], dims["height"]
 
     video_filters = []
-
-    # 9:16 Vertical crop
     if aspect_ratio == "9:16":
         if w >= h:
-            # Landscape -> center crop to 9:16 and scale to 1080x1920
             crop_w = "trunc(ih*9/16/2)*2"
             video_filters.append(f"crop={crop_w}:ih:(iw-{crop_w})/2:0")
             video_filters.append("scale=1080:1920:force_original_aspect_ratio=decrease")
             video_filters.append("pad=1080:1920:(ow-iw)/2:(oh-ih)/2")
         else:
-            # Already portrait -> scale/pad cleanly
             video_filters.append("scale=1080:1920:force_original_aspect_ratio=decrease")
             video_filters.append("pad=1080:1920:(ow-iw)/2:(oh-ih)/2")
 
-    # Burned-in captions
     srt_path = None
     if captions and speech_segments:
         srt_path = output_path.replace(".mp4", ".srt")
@@ -141,16 +291,14 @@ def render_single_reel(
             output_srt_path=srt_path
         )
         if has_subs:
-            # FFmpeg subtitles filter requires escaped path for Windows
             escaped_srt = srt_path.replace("\\", "/").replace(":", "\\:")
-            # Subtitle styling: Yellow/White text, black outline, centered near bottom
-            sub_style = "FontSize=22,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,BorderStyle=3,Outline=2,Shadow=0,Alignment=2,MarginV=45"
+            sub_style = "FontName=Arial,FontSize=28,Bold=1,PrimaryColour=&H0000FFFF,OutlineColour=&H00000000,BorderStyle=1,Outline=3,Shadow=2,Alignment=2,MarginV=120"
             video_filters.append(f"subtitles='{escaped_srt}':force_style='{sub_style}'")
 
     vf_arg = ",".join(video_filters) if video_filters else "null"
 
     cmd = [
-        "ffmpeg", "-y",
+        FFMPEG_BIN, "-y",
         "-ss", str(start_sec),
         "-i", source_video_path,
         "-t", str(duration_sec),
@@ -165,13 +313,11 @@ def render_single_reel(
         res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
         if res.returncode != 0:
             err = res.stderr.decode("utf-8", errors="replace")
-            # If subtitles filter failed (e.g. libass missing), retry without subtitles
             if "subtitles" in err and srt_path:
-                logger.warning("Subtitles filter failed in FFmpeg. Retrying without burned-in captions...")
                 no_sub_filters = [f for f in video_filters if not f.startswith("subtitles")]
                 vf_fallback = ",".join(no_sub_filters) if no_sub_filters else "null"
                 fallback_cmd = [
-                    "ffmpeg", "-y",
+                    FFMPEG_BIN, "-y",
                     "-ss", str(start_sec),
                     "-i", source_video_path,
                     "-t", str(duration_sec),
@@ -184,19 +330,16 @@ def render_single_reel(
                 res_fb = subprocess.run(fallback_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
                 if res_fb.returncode != 0:
                     err_fb = res_fb.stderr.decode("utf-8", errors="replace")
-                    raise RuntimeError(f"FFmpeg reel rendering fallback failed: {err_fb[:300]}")
+                    raise RuntimeError(f"FFmpeg fallback failed: {err_fb[:300]}")
             else:
-                raise RuntimeError(f"FFmpeg reel rendering failed: {err[:300]}")
-
+                raise RuntimeError(f"FFmpeg failed: {err[:300]}")
     finally:
-        # Clean up temporary SRT file if desired
         if srt_path and os.path.isfile(srt_path):
             try:
                 os.remove(srt_path)
             except OSError:
                 pass
 
-    # Probe rendered size
     file_size_bytes = os.path.getsize(output_path) if os.path.isfile(output_path) else 0
     return {
         "output_path": output_path,
@@ -211,6 +354,7 @@ def render_multiple_reels(
     output_dir: str,
     aspect_ratio: str = "9:16",
     captions: bool = True,
+    use_face_tracking: bool = True,
     stage_callback: Optional[callable] = None
 ) -> Dict[str, Any]:
     """
@@ -220,7 +364,7 @@ def render_multiple_reels(
     manifest_reels = []
 
     total_reels = len(selected_reels)
-    logger.info(f"Rendering {total_reels} Reels ({aspect_ratio}, captions={'ON' if captions else 'OFF'})...")
+    logger.info(f"Rendering {total_reels} Reels ({aspect_ratio}, face_tracking={use_face_tracking}, captions={'ON' if captions else 'OFF'})...")
 
     for i, reel in enumerate(selected_reels):
         reel_num = reel["reel_num"]
@@ -228,22 +372,27 @@ def render_multiple_reels(
         out_path = os.path.join(output_dir, out_filename)
 
         if stage_callback:
-            stage_callback(f"Rendering Reel {reel_num}/{total_reels} (9:16)...")
+            stage_callback(f"Rendering Reel {reel_num}/{total_reels} (Smart 9:16)...")
 
-        render_info = render_single_reel(
+        render_info = render_single_reel_smart(
             source_video_path=source_video_path,
             start_sec=reel["start_sec"],
             duration_sec=reel["duration_sec"],
             output_path=out_path,
             aspect_ratio=aspect_ratio,
             speech_segments=reel.get("speech_segments"),
-            captions=captions
+            captions=captions,
+            use_face_tracking=use_face_tracking
         )
 
         manifest_item = {
             "reel_num": reel_num,
             "filename": out_filename,
             "output_path": out_path,
+            "title": reel.get("title", f"Highlight #{reel_num}"),
+            "viral_score": reel.get("viral_score", int(round(reel.get("score", 0.7) * 100))),
+            "hook_sentence": reel.get("hook_sentence", ""),
+            "virality_reason": reel.get("virality_reason", "High audience curiosity."),
             "start_sec": reel["start_sec"],
             "end_sec": reel["end_sec"],
             "start_formatted": reel["start_formatted"],
@@ -255,7 +404,6 @@ def render_multiple_reels(
         }
         manifest_reels.append(manifest_item)
 
-    # Write manifest.json
     manifest_path = os.path.join(output_dir, "manifest.json")
     manifest_data = {
         "source_video": os.path.basename(source_video_path),
@@ -269,5 +417,4 @@ def render_multiple_reels(
         json.dump(manifest_data, f, indent=2, ensure_ascii=False)
 
     logger.info(f"Successfully rendered all {total_reels} Reels! Manifest saved to {manifest_path}")
-
     return manifest_data

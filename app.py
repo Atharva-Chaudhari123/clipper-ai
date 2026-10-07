@@ -24,15 +24,17 @@ if BASE_DIR not in sys.path:
 from src.utf8_utils import setup_utf8_environment, SafeStreamHandler
 setup_utf8_environment()
 
-# Auto-switch to working project virtual environment if current python lacks working PyTorch DLLs
-VENV_PYTHON = r"C:\Users\mahin\OneDrive\Desktop\FY PROJECT\lighthouse\venv\Scripts\python.exe"
-if os.path.isfile(VENV_PYTHON) and os.path.abspath(sys.executable) != os.path.abspath(VENV_PYTHON):
-    try:
-        import torch
-        torch._C
-    except (ImportError, Exception):
-        import subprocess
-        sys.exit(subprocess.call([VENV_PYTHON] + sys.argv))
+# Optional local virtual environment check
+for candidate_venv in [
+    os.path.join(BASE_DIR, "venv", "Scripts", "python.exe"),
+    r"C:\ProgramData\anaconda3\python.exe"
+]:
+    if os.path.isfile(candidate_venv) and os.path.abspath(sys.executable) != os.path.abspath(candidate_venv):
+        try:
+            import torch
+        except ImportError:
+            import subprocess
+            sys.exit(subprocess.call([candidate_venv] + sys.argv))
 
 import uuid
 import time
@@ -107,6 +109,8 @@ def process_video_worker(
     reel_length: str = "30-60",
     aspect_ratio: str = "9:16",
     captions: bool = True,
+    framing_mode: str = "face_track",
+    gemini_api_key: str = None,
     budget_ratio: float = 0.15,
     original_filename: str = "video.mp4"
 ):
@@ -145,6 +149,8 @@ def process_video_worker(
                 reel_length=reel_length,
                 aspect_ratio=aspect_ratio,
                 captions=captions,
+                use_face_tracking=(framing_mode == "face_track"),
+                gemini_api_key=gemini_api_key,
                 output_dir=job_output_dir,
                 stage_callback=update_stage,
                 job_id=job_id
@@ -235,6 +241,12 @@ def upload():
     captions_param = request.form.get("captions", "on")
     captions = captions_param in ["on", "1", "true", "True"]
 
+    framing_mode = request.form.get("framing_mode", "face_track")
+    if framing_mode not in ["face_track", "center_crop"]:
+        framing_mode = "face_track"
+
+    gemini_api_key = request.form.get("gemini_api_key", "").strip() or None
+
     # Parse and validate budget percentage for single mode
     budget_param = request.form.get("budget", "15")
     try:
@@ -279,6 +291,8 @@ def upload():
                 "reel_length": reel_length,
                 "aspect_ratio": aspect_ratio,
                 "captions": captions,
+                "framing_mode": framing_mode,
+                "gemini_api_key": gemini_api_key,
                 "budget_ratio": budget_ratio,
                 "original_filename": youtube_url
             },
@@ -329,6 +343,8 @@ def upload():
                 "reel_length": reel_length,
                 "aspect_ratio": aspect_ratio,
                 "captions": captions,
+                "framing_mode": framing_mode,
+                "gemini_api_key": gemini_api_key,
                 "budget_ratio": budget_ratio,
                 "original_filename": orig_filename
             },

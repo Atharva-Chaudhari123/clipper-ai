@@ -120,24 +120,46 @@
                 </div>
 
                 <!-- Reel Header -->
-                <div class="reel-meta-header">
-                  <span class="reel-title">Reel {{ reel.reel_num }}</span>
-                  <span class="badge-reel-score">Score: {{ reel.score }}</span>
+                <div class="reel-meta-header" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.5rem;">
+                  <div>
+                    <span class="reel-title" style="font-size: 1.15rem; font-weight: 700; color: #fff; display: block;">
+                      {{ reel.title or ('Reel ' ~ reel.reel_num) }}
+                    </span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">Reel #{{ reel.reel_num }}</span>
+                  </div>
+                  <span class="badge-reel-score" style="background: linear-gradient(135deg, #ff416c, #ff4b2b); color: #fff; font-weight: 800; padding: 0.25rem 0.6rem; border-radius: 999px; font-size: 0.85rem; box-shadow: 0 2px 8px rgba(255, 65, 108, 0.4);">
+                    🔥 {{ reel.viral_score or (reel.score * 100)|round|int }}/100
+                  </span>
                 </div>
 
+                <!-- Virality Hook Sentence -->
+                {% if reel.hook_sentence %}
+                  <div style="background: rgba(255, 255, 255, 0.05); border-left: 3px solid #00f2fe; padding: 0.5rem 0.75rem; border-radius: 4px; margin-bottom: 0.6rem; font-size: 0.85rem;">
+                    <div style="color: #00f2fe; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; margin-bottom: 0.2rem;">3-Sec Opening Hook:</div>
+                    <span style="color: #e2e8f0; font-style: italic;">"{{ reel.hook_sentence }}"</span>
+                  </div>
+                {% endif %}
+
                 <!-- Timestamp Pill -->
-                <div class="reel-time-badge">
+                <div class="reel-time-badge" style="margin-bottom: 0.6rem;">
                   ⏱ {{ reel.start_formatted }} &rarr; {{ reel.end_formatted }} ({{ reel.duration_sec }}s)
                 </div>
 
                 <!-- Spoken Transcript Excerpt -->
-                <div class="reel-transcript-box">
+                <div class="reel-transcript-box" style="margin-bottom: 0.75rem;">
                   {% if reel.transcript %}
                     <span class="transcript-quote">"{{ reel.transcript }}"</span>
                   {% else %}
                     <span style="color: var(--text-muted); font-style: italic;">[Visual emphasis / ambient sound]</span>
                   {% endif %}
                 </div>
+
+                <!-- Virality Reasoning -->
+                {% if reel.virality_reason %}
+                  <div style="font-size: 0.82rem; color: #a0aec0; margin-bottom: 0.8rem;">
+                    💡 <strong>Virality Reason:</strong> {{ reel.virality_reason }}
+                  </div>
+                {% endif %}
 
                 <!-- Download Individual Reel -->
                 <a href="/download/{{ job_id }}/{{ reel.filename }}" class="btn-secondary" style="font-size: 0.88rem; padding: 0.6rem 1rem; width: 100%; justify-content: center;">

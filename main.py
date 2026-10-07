@@ -369,6 +369,8 @@ def run_multi_reel_pipeline(
     reel_length: str = "30-60",
     aspect_ratio: str = "9:16",
     captions: bool = True,
+    use_face_tracking: bool = True,
+    gemini_api_key: str = None,
     output_dir: str = None,
     whisper_model_name: str = "base",
     stage_callback: callable = None,
@@ -498,7 +500,8 @@ def run_multi_reel_pipeline(
         num_reels_option=num_reels,
         quality_threshold=0.20,
         multimodal_model_path="models/best_multimodal_bilstm.pt",
-        visual_sample_interval=2.0
+        visual_sample_interval=2.0,
+        gemini_api_key=gemini_api_key
     )
     print(f"  -> Selected {len(selected_reels)} diverse, high-scoring Reels.")
 
@@ -513,6 +516,7 @@ def run_multi_reel_pipeline(
         output_dir=output_dir,
         aspect_ratio=aspect_ratio,
         captions=captions,
+        use_face_tracking=use_face_tracking,
         stage_callback=stage_callback
     )
 

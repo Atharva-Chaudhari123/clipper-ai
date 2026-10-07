@@ -18,6 +18,16 @@ def setup_utf8_environment():
     """
     os.environ["PYTHONIOENCODING"] = "utf-8"
     os.environ["PYTHONUTF8"] = "1"
+    os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+
+    # Add known FFmpeg and FFprobe binary locations to PATH on Windows
+    ffmpeg_dirs = [
+        r"C:\pinokio\bin\miniconda\Library\bin",
+        r"C:\pinokio\bin\miniconda\pkgs\ffmpeg-8.0.1-gpl_h74fd8f1_909\Library\bin"
+    ]
+    for fdir in ffmpeg_dirs:
+        if os.path.isdir(fdir) and fdir not in os.environ.get("PATH", ""):
+            os.environ["PATH"] = fdir + os.pathsep + os.environ.get("PATH", "")
 
     for stream_name in ("stdout", "stderr", "stdin"):
         stream = getattr(sys, stream_name, None)

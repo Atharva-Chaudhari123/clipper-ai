@@ -207,8 +207,8 @@
             </div>
           </div>
 
-          <!-- Aspect Ratio & Captions Grid -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <!-- Aspect Ratio & Framing & Captions Grid -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
             <div>
               <div class="section-label" style="font-size: 0.92rem; margin-bottom: 0.5rem;">Aspect Ratio</div>
               <div class="pill-selector">
@@ -223,6 +223,23 @@
                 <label class="pill-btn"><input type="radio" name="captions" value="on" checked><span>ON</span></label>
                 <label class="pill-btn"><input type="radio" name="captions" value="off"><span>OFF</span></label>
               </div>
+            </div>
+          </div>
+
+          <!-- Smart Face Tracking Toggle -->
+          <div class="sub-options-row" style="margin-bottom: 1.5rem;">
+            <div class="section-label" style="font-size: 0.92rem; margin-bottom: 0.5rem;">
+              9:16 Framing Mode (Opus Style)
+            </div>
+            <div class="pill-selector">
+              <label class="pill-btn">
+                <input type="radio" name="framing_mode" value="face_track" checked>
+                <span>👤 Smart Face Tracking (Auto)</span>
+              </label>
+              <label class="pill-btn">
+                <input type="radio" name="framing_mode" value="center_crop">
+                <span>Center Crop</span>
+              </label>
             </div>
           </div>
 
@@ -305,7 +322,30 @@
           </div>
         </div>
 
-        <!-- Submit Button -->
+        <!-- Optional Gemini API Key for Enhanced Virality (Opus Clip Style) -->
+        <div class="virality-api-box" style="margin-top: 2rem; background: rgba(15, 23, 42, 0.4); border: 1px dashed rgba(56, 189, 248, 0.35); border-radius: var(--radius-md); padding: 1.25rem;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="font-size: 1.1rem;">✨</span>
+              <span style="font-weight: 700; color: #fff; font-size: 0.95rem;">AI Virality Engine (Optional)</span>
+            </div>
+            <span style="font-size: 0.75rem; background: rgba(56, 189, 248, 0.15); color: var(--accent-cyan); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600;">
+              Dual-Engine: Gemini or Offline NLP
+            </span>
+          </div>
+          <p style="font-size: 0.84rem; color: var(--text-secondary); margin-bottom: 0.75rem; line-height: 1.45;">
+            Paste a free <strong style="color: #fff;">Gemini API key</strong> for creative social media titles and viral reasoning. If left empty, the system automatically uses the <strong style="color: var(--accent-cyan);">built-in offline NLP engine</strong> with zero external API calls.
+          </p>
+          <input 
+            type="password" 
+            name="gemini_api_key" 
+            placeholder="Paste Gemini API Key (Optional — Leave blank for Offline NLP)" 
+            autocomplete="off"
+            style="width: 100%; padding: 0.65rem 0.9rem; background: rgba(3, 7, 18, 0.6); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: #fff; font-size: 0.88rem; outline: none; transition: border-color 0.2s;"
+            onfocus="this.style.borderColor='var(--accent-cyan)'"
+            onblur="this.style.borderColor='var(--border-color)'"
+          >
+        </div>
         <button type="submit" id="submitBtn" class="btn-primary" style="margin-top: 2.5rem;">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polygon points="5 3 19 12 5 21 5 3"></polygon>
