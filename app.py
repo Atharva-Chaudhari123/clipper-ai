@@ -24,18 +24,6 @@ if BASE_DIR not in sys.path:
 from src.utf8_utils import setup_utf8_environment, SafeStreamHandler
 setup_utf8_environment()
 
-# Optional local virtual environment check
-for candidate_venv in [
-    os.path.join(BASE_DIR, "venv", "Scripts", "python.exe"),
-    r"C:\ProgramData\anaconda3\python.exe"
-]:
-    if os.path.isfile(candidate_venv) and os.path.abspath(sys.executable) != os.path.abspath(candidate_venv):
-        try:
-            import torch
-        except ImportError:
-            import subprocess
-            sys.exit(subprocess.call([candidate_venv] + sys.argv))
-
 import uuid
 import time
 import json
