@@ -93,6 +93,182 @@ def format_srt_timestamp(seconds: float) -> str:
     return f"{hrs:02d}:{mins:02d}:{secs:02d},{millis:03d}"
 
 
+def format_ass_timestamp(seconds: float) -> str:
+    """Formats float seconds into ASS timestamp string H:MM:SS.cc."""
+    seconds = max(0.0, seconds)
+    hrs = int(seconds // 3600)
+    mins = int((seconds % 3600) // 60)
+    secs = int(seconds % 60)
+    centis = int(round((seconds - int(seconds)) * 100))
+    if centis >= 100:
+        secs += 1
+        centis = 0
+    return f"{hrs}:{mins:02d}:{secs:02d}.{centis:02d}"
+
+
+def extract_words_for_reel(
+    speech_segments: List[Dict[str, Any]],
+    reel_start_sec: float,
+    reel_end_sec: float
+) -> List[Dict[str, Any]]:
+    """
+    Extracts all words within [reel_start_sec, reel_end_sec], shifting timestamps relative
+    to reel_start_sec. If a segment does not have word-level timestamps, synthesizes them
+    proportionally by character length so word-level animation is always available.
+    """
+    if not speech_segments:
+        return []
+
+    words_in_reel = []
+
+    for seg in speech_segments:
+        s = seg.get("start", 0.0)
+        e = seg.get("end", 0.0)
+        txt = seg.get("text", "").strip()
+
+        if e <= reel_start_sec or s >= reel_end_sec or not txt:
+            continue
+
+        raw_words = seg.get("words", [])
+        if raw_words:
+            for w in raw_words:
+                w_start = w.get("start", s)
+                w_end = w.get("end", e)
+                w_txt = w.get("word", "").strip()
+                if not w_txt:
+                    continue
+
+                if w_end <= reel_start_sec or w_start >= reel_end_sec:
+                    continue
+
+                rel_s = max(0.0, w_start - reel_start_sec)
+                rel_e = min(reel_end_sec - reel_start_sec, w_end - reel_start_sec)
+                if rel_e <= rel_s:
+                    rel_e = rel_s + 0.15
+
+                words_in_reel.append({
+                    "word": w_txt,
+                    "start": rel_s,
+                    "end": rel_e
+                })
+        else:
+            pieces = [p for p in txt.split() if p.strip()]
+            if not pieces:
+                continue
+            seg_rel_s = max(0.0, s - reel_start_sec)
+            seg_rel_e = min(reel_end_sec - reel_start_sec, e - reel_start_sec)
+            seg_dur = max(0.2, seg_rel_e - seg_rel_s)
+
+            total_chars = sum(len(p) for p in pieces)
+            curr_time = seg_rel_s
+            for p in pieces:
+                w_dur = max(0.15, (len(p) / max(1, total_chars)) * seg_dur)
+                w_end = min(seg_rel_e, curr_time + w_dur)
+                if w_end <= curr_time:
+                    w_end = curr_time + 0.15
+                words_in_reel.append({
+                    "word": p,
+                    "start": curr_time,
+                    "end": w_end
+                })
+                curr_time = w_end
+
+    words_in_reel.sort(key=lambda x: x["start"])
+    return words_in_reel
+
+
+def generate_reel_ass(
+    speech_segments: List[Dict[str, Any]],
+    reel_start_sec: float,
+    reel_end_sec: float,
+    output_ass_path: str,
+    aspect_ratio: str = "9:16"
+) -> bool:
+    """
+    Generates an Advanced SubStation Alpha (.ass) subtitle file featuring:
+    1. Bottom lower-third placement (MarginV=240 on 1080x1920 canvas, below face and above controls).
+    2. Clean, normal font size (52pt bold on 1080x1920, 1 compact line of 3-4 words).
+    3. Precise word-by-word highlighting (Opus Clip / TikTok karaoke style):
+       Current word highlighted in bold electric yellow (&H0000FFFF&),
+       while surrounding words remain clean white (&H00FFFFFF&) with deep black outline.
+    """
+    words = extract_words_for_reel(speech_segments, reel_start_sec, reel_end_sec)
+    if not words:
+        return False
+
+    os.makedirs(os.path.dirname(os.path.abspath(output_ass_path)), exist_ok=True)
+
+    is_portrait = (aspect_ratio == "9:16")
+    play_res_x = 1080 if is_portrait else 1920
+    play_res_y = 1920 if is_portrait else 1080
+    font_size = 52 if is_portrait else 44
+    margin_v = 240 if is_portrait else 90
+    outline_size = 4.5 if is_portrait else 3.5
+    shadow_size = 2.0
+    max_words_per_line = 4 if is_portrait else 6
+
+    # Chunk words into natural bite-sized phrase lines (3-4 words)
+    chunks = []
+    current_chunk = []
+    for w in words:
+        current_chunk.append(w)
+        has_punct = any(w["word"].endswith(punct) for punct in (".", "?", "!", ","))
+        if len(current_chunk) >= max_words_per_line or (has_punct and len(current_chunk) >= 2):
+            chunks.append(current_chunk)
+            current_chunk = []
+    if current_chunk:
+        chunks.append(current_chunk)
+
+    ass_lines = [
+        "[Script Info]",
+        "ScriptType: v4.00+",
+        f"PlayResX: {play_res_x}",
+        f"PlayResY: {play_res_y}",
+        "ScaledBorderAndShadow: yes",
+        "",
+        "[V4+ Styles]",
+        "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding",
+        f"Style: ReelCaption,Arial,{font_size},&H00FFFFFF,&H0000FFFF,&H00000000,&H80000000,1,0,0,0,100,100,1,0,1,{outline_size},{shadow_size},2,50,50,{margin_v},1",
+        "",
+        "[Events]",
+        "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text"
+    ]
+
+    event_count = 0
+    for chunk in chunks:
+        for active_idx, active_word in enumerate(chunk):
+            w_start = active_word["start"]
+            w_end = active_word["end"]
+            if w_end <= w_start:
+                w_end = w_start + 0.15
+
+            # Build line with active word highlighted in bold vibrant yellow (\c&H0000FFFF&)
+            line_parts = []
+            for idx, w_item in enumerate(chunk):
+                w_clean = w_item["word"].upper()
+                if idx == active_idx:
+                    line_parts.append(r"{\c&H0000FFFF&}" + w_clean + r"{\c&H00FFFFFF&}")
+                else:
+                    line_parts.append(w_clean)
+
+            line_text = " ".join(line_parts)
+            start_str = format_ass_timestamp(w_start)
+            end_str = format_ass_timestamp(w_end)
+
+            ass_lines.append(
+                f"Dialogue: 0,{start_str},{end_str},ReelCaption,,0,0,0,,{line_text}"
+            )
+            event_count += 1
+
+    if event_count == 0:
+        return False
+
+    with open(output_ass_path, "w", encoding="utf-8") as f:
+        f.write("\n".join(ass_lines) + "\n")
+
+    return True
+
+
 def generate_reel_srt(
     speech_segments: List[Dict[str, Any]],
     reel_start_sec: float,
@@ -194,15 +370,13 @@ def render_single_reel_smart(
 
                     if frames_written > 0 and os.path.isfile(silent_temp):
                         # Mux audio and burn subtitles
-                        srt_path = None
+                        ass_path = None
                         vf_filters = []
                         if captions and speech_segments:
-                            srt_path = output_path.replace(".mp4", ".srt")
-                            if generate_reel_srt(speech_segments, start_sec, start_sec + duration_sec, srt_path):
-                                escaped_srt = srt_path.replace("\\", "/").replace(":", "\\:")
-                                # TikTok/Reels high-impact subtitle styling: Yellow font, bold black outline, centered at lower-third
-                                sub_style = "FontName=Arial,FontSize=28,Bold=1,PrimaryColour=&H0000FFFF,OutlineColour=&H00000000,BorderStyle=1,Outline=3,Shadow=2,Alignment=2,MarginV=120"
-                                vf_filters.append(f"subtitles='{escaped_srt}':force_style='{sub_style}'")
+                            ass_path = output_path.replace(".mp4", ".ass")
+                            if generate_reel_ass(speech_segments, start_sec, start_sec + duration_sec, ass_path, aspect_ratio=aspect_ratio):
+                                escaped_ass = ass_path.replace("\\", "/").replace(":", "\\:")
+                                vf_filters.append(f"ass='{escaped_ass}'")
 
                         mux_cmd = [
                             FFMPEG_BIN, "-y",
@@ -226,9 +400,9 @@ def render_single_reel_smart(
                                 os.remove(silent_temp)
                             except OSError:
                                 pass
-                        if srt_path and os.path.isfile(srt_path):
+                        if ass_path and os.path.isfile(ass_path):
                             try:
-                                os.remove(srt_path)
+                                os.remove(ass_path)
                             except OSError:
                                 pass
 
@@ -281,19 +455,19 @@ def _render_ffmpeg_crop(
             video_filters.append("scale=1080:1920:force_original_aspect_ratio=decrease")
             video_filters.append("pad=1080:1920:(ow-iw)/2:(oh-ih)/2")
 
-    srt_path = None
+    ass_path = None
     if captions and speech_segments:
-        srt_path = output_path.replace(".mp4", ".srt")
-        has_subs = generate_reel_srt(
+        ass_path = output_path.replace(".mp4", ".ass")
+        has_subs = generate_reel_ass(
             speech_segments=speech_segments,
             reel_start_sec=start_sec,
             reel_end_sec=start_sec + duration_sec,
-            output_srt_path=srt_path
+            output_ass_path=ass_path,
+            aspect_ratio=aspect_ratio
         )
         if has_subs:
-            escaped_srt = srt_path.replace("\\", "/").replace(":", "\\:")
-            sub_style = "FontName=Arial,FontSize=28,Bold=1,PrimaryColour=&H0000FFFF,OutlineColour=&H00000000,BorderStyle=1,Outline=3,Shadow=2,Alignment=2,MarginV=120"
-            video_filters.append(f"subtitles='{escaped_srt}':force_style='{sub_style}'")
+            escaped_ass = ass_path.replace("\\", "/").replace(":", "\\:")
+            video_filters.append(f"ass='{escaped_ass}'")
 
     vf_arg = ",".join(video_filters) if video_filters else "null"
 
@@ -313,8 +487,8 @@ def _render_ffmpeg_crop(
         res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
         if res.returncode != 0:
             err = res.stderr.decode("utf-8", errors="replace")
-            if "subtitles" in err and srt_path:
-                no_sub_filters = [f for f in video_filters if not f.startswith("subtitles")]
+            if ("ass" in err or "subtitles" in err) and ass_path:
+                no_sub_filters = [f for f in video_filters if not (f.startswith("ass") or f.startswith("subtitles"))]
                 vf_fallback = ",".join(no_sub_filters) if no_sub_filters else "null"
                 fallback_cmd = [
                     FFMPEG_BIN, "-y",
@@ -334,9 +508,9 @@ def _render_ffmpeg_crop(
             else:
                 raise RuntimeError(f"FFmpeg failed: {err[:300]}")
     finally:
-        if srt_path and os.path.isfile(srt_path):
+        if ass_path and os.path.isfile(ass_path):
             try:
-                os.remove(srt_path)
+                os.remove(ass_path)
             except OSError:
                 pass
 

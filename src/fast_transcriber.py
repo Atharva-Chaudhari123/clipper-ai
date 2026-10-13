@@ -170,6 +170,7 @@ def transcribe_candidate_windows(
                 cand_audio,
                 language=language,
                 beam_size=3,
+                word_timestamps=True,
                 vad_filter=True,
                 vad_parameters=dict(min_silence_duration_ms=400)
             )
@@ -183,10 +184,23 @@ def transcribe_candidate_windows(
                     # Map relative timestamps to absolute video timestamps
                     abs_start = round(start_sec + seg.start, 2)
                     abs_end = round(start_sec + seg.end, 2)
+
+                    words_list = []
+                    if hasattr(seg, "words") and seg.words:
+                        for w in seg.words:
+                            w_txt = w.word.strip()
+                            if w_txt:
+                                words_list.append({
+                                    "word": w_txt,
+                                    "start": round(start_sec + w.start, 2),
+                                    "end": round(start_sec + w.end, 2)
+                                })
+
                     parsed_segments.append({
                         "start": abs_start,
                         "end": abs_end,
-                        "text": txt
+                        "text": txt,
+                        "words": words_list
                     })
                     text_pieces.append(txt)
 
@@ -222,6 +236,7 @@ def transcribe_full_audio_fast(
             wav_path,
             language=language,
             beam_size=3,
+            word_timestamps=True,
             vad_filter=True
         )
 
@@ -230,10 +245,22 @@ def transcribe_full_audio_fast(
         for s in segments_generator:
             txt = s.text.strip()
             if txt:
+                words_list = []
+                if hasattr(s, "words") and s.words:
+                    for w in s.words:
+                        w_txt = w.word.strip()
+                        if w_txt:
+                            words_list.append({
+                                "word": w_txt,
+                                "start": round(s.start, 2),
+                                "end": round(s.end, 2)
+                            })
+
                 parsed_segments.append({
                     "start": round(s.start, 2),
                     "end": round(s.end, 2),
-                    "text": txt
+                    "text": txt,
+                    "words": words_list
                 })
                 text_pieces.append(txt)
 
