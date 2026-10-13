@@ -2,7 +2,7 @@
  * static/js/script.js
  * -------------------
  * Interactive behaviors for tab switching, video upload / YouTube URL validation,
- * and dynamic multi-stage processing polling.
+ * output mode switching, API key visibility toggle, and dynamic multi-stage processing polling.
  */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -34,6 +34,38 @@ function switchSourceTab(type) {
     if (filePanel) filePanel.style.display = "block";
     if (tabYoutubeBtn) tabYoutubeBtn.classList.remove("active");
     if (tabUploadBtn) tabUploadBtn.classList.add("active");
+  }
+}
+
+/**
+ * Switches between Multi-Reel and Single Summary output modes on index page.
+ */
+function switchOutputMode(mode) {
+  const multiPanel = document.getElementById("multiReelOptionsPanel");
+  const singlePanel = document.getElementById("singleSummaryBudgetPanel");
+  const btnText = document.getElementById("submitBtnText");
+
+  if (mode === "reels") {
+    if (multiPanel) multiPanel.style.display = "block";
+    if (singlePanel) singlePanel.style.display = "none";
+    if (btnText) btnText.textContent = "Generate Viral Reels (9:16)";
+  } else {
+    if (multiPanel) multiPanel.style.display = "none";
+    if (singlePanel) singlePanel.style.display = "block";
+    if (btnText) btnText.textContent = "Generate Highlight Summary";
+  }
+}
+
+/**
+ * Toggles visibility of the optional Gemini API key password input.
+ */
+function toggleKeyVisibility() {
+  const keyInput = document.getElementById("geminiApiKey");
+  if (!keyInput) return;
+  if (keyInput.type === "password") {
+    keyInput.type = "text";
+  } else {
+    keyInput.type = "password";
   }
 }
 
@@ -138,8 +170,8 @@ function initFormHandler() {
         submitBtn.disabled = true;
         submitBtn.innerHTML = `
           <svg class="animate-spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
-            <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"></path>
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-opacity="0.25"></circle>
+            <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-linecap="round"></path>
           </svg>
           Initializing Processing...
         `;
@@ -195,25 +227,6 @@ function initProcessingPoller() {
         console.warn("Polling status error:", err);
       });
   }
-
-/**
- * Switches between Multi-Reel and Single Summary output modes on index page.
- */
-function switchOutputMode(mode) {
-  const multiPanel = document.getElementById("multiReelOptionsPanel");
-  const singlePanel = document.getElementById("singleSummaryBudgetPanel");
-  const btnText = document.getElementById("submitBtnText");
-
-  if (mode === "reels") {
-    if (multiPanel) multiPanel.style.display = "block";
-    if (singlePanel) singlePanel.style.display = "none";
-    if (btnText) btnText.textContent = "Generate Reels (9:16)";
-  } else {
-    if (multiPanel) multiPanel.style.display = "none";
-    if (singlePanel) singlePanel.style.display = "block";
-    if (btnText) btnText.textContent = "Generate Highlights";
-  }
-}
 
   function updateStageIndicators(currentStage) {
     if (!currentStage) return;

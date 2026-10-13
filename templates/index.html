@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Automatic Video Highlight Detection & Short Video Generation</title>
+  <title>HighlightAI — Automatic Video Highlight & Viral Reel Generator</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -19,7 +19,10 @@
           <h1>HighlightAI</h1>
         </div>
       </a>
-      <span class="logo-badge">ResNet-50 + Whisper + BiLSTM</span>
+      <div class="nav-badges">
+        <span class="logo-badge">CUDA GPU Accelerated</span>
+        <span class="logo-badge badge-model">ResNet-50 + Whisper + BiLSTM</span>
+      </div>
     </div>
   </header>
 
@@ -30,6 +33,11 @@
         <div class="flash-container">
           {% for category, message in messages %}
             <div class="alert alert-{{ category }}">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
               <span>{{ message }}</span>
             </div>
           {% endfor %}
@@ -39,117 +47,129 @@
 
     {% if error_message %}
       <div class="alert alert-danger">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="15" y1="9" x2="9" y2="15"></line>
+          <line x1="9" y1="9" x2="15" y2="15"></line>
+        </svg>
         <span>{{ error_message }}</span>
       </div>
     {% endif %}
 
     <!-- Hero Section -->
     <section class="hero-section">
-      <h1 class="hero-title">Automatic Video Highlight Detection</h1>
+      <div class="hero-badge">AI Video Intelligence</div>
+      <h1 class="hero-title">Turn Any Video into Viral Shorts & Highlights</h1>
       <p class="hero-subtitle">
-        AI-powered video highlight generation analyzing visual features and spoken speech transcripts.
+        Automatically detect the most engaging moments, track faces into 9:16 portrait, generate animated subtitles, and rank hooks using multimodal deep learning.
       </p>
       <div class="tech-badges">
-        <span class="tech-pill">PyTorch CUDA</span>
-        <span class="tech-pill">Pretrained ResNet-50</span>
-        <span class="tech-pill">OpenAI Whisper</span>
-        <span class="tech-pill">MiniLM-L6-v2 Embeddings</span>
-        <span class="tech-pill">Multimodal BiLSTM</span>
-        <span class="tech-pill">yt-dlp YouTube</span>
+        <span class="tech-pill">⚡ PyTorch RTX GPU</span>
+        <span class="tech-pill">👁️ ResNet-50 Visual Features</span>
+        <span class="tech-pill">🎙️ Faster-Whisper Speech</span>
+        <span class="tech-pill">🧠 MiniLM-L6-v2 Embeddings</span>
+        <span class="tech-pill">📊 Multimodal Bi-LSTM</span>
+        <span class="tech-pill">👤 YuNet Face Tracking</span>
       </div>
     </section>
 
     <!-- Upload & Options Form Card -->
-    <div class="card">
+    <div class="card form-card">
       <form id="highlightForm" action="/upload" method="POST" enctype="multipart/form-data">
         <input type="hidden" name="upload_type" id="uploadType" value="file">
         
-        <!-- Source Selection Tabs -->
-        <div class="source-tabs">
-          <button type="button" class="tab-btn active" id="tabUploadBtn" onclick="switchSourceTab('file')">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
-              <line x1="7" y1="2" x2="7" y2="22"></line>
-              <line x1="17" y1="2" x2="17" y2="22"></line>
-              <line x1="2" y1="12" x2="22" y2="12"></line>
-            </svg>
-            Upload Local Video
-          </button>
+        <!-- STEP 1: Video Source -->
+        <section class="form-section">
+          <div class="section-header">
+            <div class="step-num">1</div>
+            <div>
+              <h2 class="section-title">Select Video Source</h2>
+              <p class="section-desc">Upload a local video file (.mp4) or paste a YouTube URL to get started.</p>
+            </div>
+          </div>
 
-          <button type="button" class="tab-btn" id="tabYoutubeBtn" onclick="switchSourceTab('youtube')">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-            </svg>
-            Paste YouTube URL
-          </button>
-        </div>
-
-        <!-- 1. Video File Dropzone Panel -->
-        <div id="fileUploadPanel" class="input-panel">
-          <div class="dropzone-container" id="dropzone">
-            <input type="file" name="video_file" id="videoFile" class="file-input" accept=".mp4">
-            <div class="upload-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <!-- Source Selection Tabs -->
+          <div class="source-tabs">
+            <button type="button" class="tab-btn active" id="tabUploadBtn" onclick="switchSourceTab('file')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                 <polyline points="17 8 12 3 7 8"></polyline>
                 <line x1="12" y1="3" x2="12" y2="15"></line>
               </svg>
-            </div>
-            <p class="upload-text-main">Click to browse or drag & drop video</p>
-            <p class="upload-text-sub">Supported format: MP4 (H.264/AAC) • Max file size: 500 MB</p>
-          </div>
+              Upload Local Video (MP4)
+            </button>
 
-          <!-- Selected File Banner -->
-          <div class="selected-file-banner" id="selectedFileBanner" style="display: none;">
-            <div>
-              <span style="color: var(--text-muted); margin-right: 0.5rem;">Selected File:</span>
-              <span class="selected-filename" id="selectedFileName">video.mp4</span>
-            </div>
-            <span style="color: var(--accent-emerald); font-weight: 600;">Ready</span>
-          </div>
-        </div>
-
-        <!-- 2. YouTube Input Panel -->
-        <div id="youtubePanel" class="input-panel" style="display: none;">
-          <div class="youtube-input-group">
-            <label for="youtubeUrl" class="section-label" style="margin-bottom: 0.5rem;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            <button type="button" class="tab-btn" id="tabYoutubeBtn" onclick="switchSourceTab('youtube')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
               </svg>
-              YouTube Video Link
-            </label>
-            <input 
-              type="url" 
-              name="youtube_url" 
-              id="youtubeUrl" 
-              class="text-input" 
-              placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-              autocomplete="off"
-            >
-            <p class="input-hint">
-              Supports standard YouTube links (<code>youtube.com/watch?v=...</code>), shortened links (<code>youtu.be/...</code>), and Shorts (<code>youtube.com/shorts/...</code>). Max length: 30 minutes.
-            </p>
+              Paste YouTube URL
+            </button>
           </div>
-        </div>
 
-        <!-- Analysis Mode Selector -->
-        <div class="mode-group" style="margin-top: 2rem;">
-          <div class="section-label">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="3"></circle>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-            </svg>
-            Analysis Mode
-        <!-- Output Mode Selector -->
-        <div class="mode-group" style="margin-top: 2rem;">
-          <div class="section-label">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
-              <line x1="7" y1="2" x2="7" y2="22"></line>
-              <line x1="17" y1="2" x2="17" y2="22"></line>
-            </svg>
-            Output Format
+          <!-- 1. Video File Dropzone Panel -->
+          <div id="fileUploadPanel" class="input-panel">
+            <div class="dropzone-container" id="dropzone">
+              <input type="file" name="video_file" id="videoFile" class="file-input" accept=".mp4">
+              <div class="upload-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+              </div>
+              <p class="upload-text-main">Click to browse or drag & drop video</p>
+              <p class="upload-text-sub">Supported format: MP4 (H.264 / AAC) • Up to 500 MB</p>
+            </div>
+
+            <!-- Selected File Banner -->
+            <div class="selected-file-banner" id="selectedFileBanner" style="display: none;">
+              <div class="selected-file-info">
+                <div class="file-icon-badge">✓</div>
+                <div>
+                  <div class="selected-file-title">Selected Video Ready</div>
+                  <div class="selected-filename" id="selectedFileName">video.mp4</div>
+                </div>
+              </div>
+              <button type="button" class="btn-change-file" onclick="document.getElementById('videoFile').click()">Change File</button>
+            </div>
+          </div>
+
+          <!-- 2. YouTube Input Panel -->
+          <div id="youtubePanel" class="input-panel" style="display: none;">
+            <div class="youtube-input-group">
+              <label for="youtubeUrl" class="field-label">
+                YouTube Video URL
+              </label>
+              <div class="input-with-icon">
+                <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                </svg>
+                <input 
+                  type="url" 
+                  name="youtube_url" 
+                  id="youtubeUrl" 
+                  class="text-input" 
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  autocomplete="off"
+                >
+              </div>
+              <p class="input-hint">
+                Supports standard links (<code>youtube.com/watch?v=...</code>), short links (<code>youtu.be/...</code>), and Shorts (<code>youtube.com/shorts/...</code>).
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- STEP 2: Output Format -->
+        <section class="form-section">
+          <div class="section-header">
+            <div class="step-num">2</div>
+            <div>
+              <h2 class="section-title">Output Format</h2>
+              <p class="section-desc">Choose between multi-reel social shorts or a stitched long-form summary.</p>
+            </div>
           </div>
 
           <div class="mode-options">
@@ -158,11 +178,14 @@
               <input type="radio" name="output_mode" value="reels" checked onchange="switchOutputMode('reels')">
               <div class="mode-box">
                 <div class="mode-header">
-                  <span class="mode-title">Multiple Short Reels (9:16)</span>
-                  <span class="badge-recommended">New &bull; Phase 13</span>
+                  <div class="mode-title-wrap">
+                    <span class="mode-icon">📱</span>
+                    <span class="mode-title">Multiple Viral Reels</span>
+                  </div>
+                  <span class="badge-recommended">9:16 Portrait • Popular</span>
                 </div>
                 <div class="mode-desc">
-                  Generates multiple vertical clips optimized for YouTube Shorts, Reels, and TikTok with candidate-only faster-whisper.
+                  Generates multiple standalone vertical clips optimized for TikTok, YouTube Shorts, and Instagram Reels with face tracking and subtitles.
                 </div>
               </div>
             </label>
@@ -172,87 +195,110 @@
               <input type="radio" name="output_mode" value="single" onchange="switchOutputMode('single')">
               <div class="mode-box">
                 <div class="mode-header">
-                  <span class="mode-title">Single Highlight Summary</span>
+                  <div class="mode-title-wrap">
+                    <span class="mode-icon">🎬</span>
+                    <span class="mode-title">Single Summary Video</span>
+                  </div>
+                  <span class="badge-format">16:9 Landscape</span>
                 </div>
                 <div class="mode-desc">
-                  Stitches all top-scoring intervals into a single concatenated summary video under a duration budget.
+                  Stitches all top-scoring intervals into a single continuous highlight video within a set duration budget.
                 </div>
               </div>
             </label>
           </div>
-        </div>
+        </section>
 
-        <!-- Multi-Reels Options Panel -->
-        <div id="multiReelOptionsPanel" style="margin-top: 2rem;">
-          
-          <!-- Number of Reels -->
-          <div class="sub-options-row" style="margin-bottom: 1.5rem;">
-            <div class="section-label" style="font-size: 0.92rem; margin-bottom: 0.5rem;">Number of Reels</div>
-            <div class="pill-selector">
-              <label class="pill-btn"><input type="radio" name="num_reels" value="auto" checked><span>Auto</span></label>
-              <label class="pill-btn"><input type="radio" name="num_reels" value="3"><span>3 Reels</span></label>
-              <label class="pill-btn"><input type="radio" name="num_reels" value="5"><span>5 Reels</span></label>
-              <label class="pill-btn"><input type="radio" name="num_reels" value="10"><span>10 Reels</span></label>
-            </div>
-          </div>
-
-          <!-- Reel Length -->
-          <div class="sub-options-row" style="margin-bottom: 1.5rem;">
-            <div class="section-label" style="font-size: 0.92rem; margin-bottom: 0.5rem;">Target Reel Length</div>
-            <div class="pill-selector">
-              <label class="pill-btn"><input type="radio" name="reel_length" value="15-30"><span>15–30s</span></label>
-              <label class="pill-btn"><input type="radio" name="reel_length" value="30-60" checked><span>30–60s (Default)</span></label>
-              <label class="pill-btn"><input type="radio" name="reel_length" value="60-90"><span>60–90s</span></label>
-              <label class="pill-btn"><input type="radio" name="reel_length" value="auto"><span>Auto</span></label>
-            </div>
-          </div>
-
-          <!-- Aspect Ratio & Framing & Captions Grid -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+        <!-- STEP 3: Multi-Reels Customization Panel (Active by default) -->
+        <section id="multiReelOptionsPanel" class="form-section">
+          <div class="section-header">
+            <div class="step-num">3</div>
             <div>
-              <div class="section-label" style="font-size: 0.92rem; margin-bottom: 0.5rem;">Aspect Ratio</div>
+              <h2 class="section-title">Reel Customization Settings</h2>
+              <p class="section-desc">Configure clip count, target duration, framing mode, and subtitles.</p>
+            </div>
+          </div>
+
+          <div class="settings-grid">
+            
+            <!-- Number of Reels -->
+            <div class="setting-item">
+              <label class="setting-label">Number of Reels</label>
               <div class="pill-selector">
-                <label class="pill-btn"><input type="radio" name="aspect_ratio" value="9:16" checked><span>9:16 Vertical</span></label>
-                <label class="pill-btn"><input type="radio" name="aspect_ratio" value="16:9"><span>16:9 Original</span></label>
+                <label class="pill-btn"><input type="radio" name="num_reels" value="auto" checked><span>Auto (AI Choice)</span></label>
+                <label class="pill-btn"><input type="radio" name="num_reels" value="3"><span>3 Reels</span></label>
+                <label class="pill-btn"><input type="radio" name="num_reels" value="5"><span>5 Reels</span></label>
+                <label class="pill-btn"><input type="radio" name="num_reels" value="10"><span>10 Reels</span></label>
               </div>
             </div>
 
-            <div>
-              <div class="section-label" style="font-size: 0.92rem; margin-bottom: 0.5rem;">Burned-In Captions</div>
+            <!-- Target Reel Length -->
+            <div class="setting-item">
+              <label class="setting-label">Target Reel Duration</label>
               <div class="pill-selector">
-                <label class="pill-btn"><input type="radio" name="captions" value="on" checked><span>ON</span></label>
-                <label class="pill-btn"><input type="radio" name="captions" value="off"><span>OFF</span></label>
+                <label class="pill-btn"><input type="radio" name="reel_length" value="15-30"><span>15–30s</span></label>
+                <label class="pill-btn"><input type="radio" name="reel_length" value="30-60" checked><span>30–60s (Default)</span></label>
+                <label class="pill-btn"><input type="radio" name="reel_length" value="60-90"><span>60–90s</span></label>
+                <label class="pill-btn"><input type="radio" name="reel_length" value="auto"><span>Auto</span></label>
               </div>
             </div>
-          </div>
 
-          <!-- Smart Face Tracking Toggle -->
-          <div class="sub-options-row" style="margin-bottom: 1.5rem;">
-            <div class="section-label" style="font-size: 0.92rem; margin-bottom: 0.5rem;">
-              9:16 Framing Mode (Opus Style)
+            <!-- Smart Face Tracking Framing Mode -->
+            <div class="setting-item">
+              <label class="setting-label">9:16 Framing Mode (Opus Style)</label>
+              <div class="pill-selector">
+                <label class="pill-btn">
+                  <input type="radio" name="framing_mode" value="face_track" checked>
+                  <span>👤 Smart Face Tracking (AI)</span>
+                </label>
+                <label class="pill-btn">
+                  <input type="radio" name="framing_mode" value="center_crop">
+                  <span>↔️ Center Crop</span>
+                </label>
+              </div>
             </div>
-            <div class="pill-selector">
-              <label class="pill-btn">
-                <input type="radio" name="framing_mode" value="face_track" checked>
-                <span>👤 Smart Face Tracking (Auto)</span>
-              </label>
-              <label class="pill-btn">
-                <input type="radio" name="framing_mode" value="center_crop">
-                <span>Center Crop</span>
-              </label>
+
+            <!-- Burned-In Captions -->
+            <div class="setting-item">
+              <label class="setting-label">Burned-In Captions</label>
+              <div class="pill-selector">
+                <label class="pill-btn">
+                  <input type="radio" name="captions" value="on" checked>
+                  <span>⚡ Yellow Pop (Auto-Synced)</span>
+                </label>
+                <label class="pill-btn">
+                  <input type="radio" name="captions" value="off">
+                  <span>Captions Off</span>
+                </label>
+              </div>
             </div>
+
+            <!-- Aspect Ratio -->
+            <div class="setting-item full-width">
+              <label class="setting-label">Output Aspect Ratio</label>
+              <div class="pill-selector">
+                <label class="pill-btn">
+                  <input type="radio" name="aspect_ratio" value="9:16" checked>
+                  <span>📱 9:16 Vertical (Reels / TikTok / Shorts)</span>
+                </label>
+                <label class="pill-btn">
+                  <input type="radio" name="aspect_ratio" value="16:9">
+                  <span>🖥️ 16:9 Original (Landscape)</span>
+                </label>
+              </div>
+            </div>
+
           </div>
+        </section>
 
-        </div>
-
-        <!-- Single Summary Budget Selector (Hidden by default when in multi-reel mode) -->
-        <div id="singleSummaryBudgetPanel" class="budget-group" style="display: none; margin-top: 2rem;">
-          <div class="section-label">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <polyline points="12 6 12 12 16 14"></polyline>
-            </svg>
-            Highlight Duration Budget
+        <!-- STEP 3 ALT: Single Summary Budget Selector (Hidden by default when in reels mode) -->
+        <section id="singleSummaryBudgetPanel" class="form-section" style="display: none;">
+          <div class="section-header">
+            <div class="step-num">3</div>
+            <div>
+              <h2 class="section-title">Highlight Duration Budget</h2>
+              <p class="section-desc">Choose what percentage of the original video duration to retain in the summary.</p>
+            </div>
           </div>
 
           <div class="budget-options">
@@ -280,16 +326,16 @@
               </div>
             </label>
           </div>
-        </div>
+        </section>
 
-        <!-- Analysis Mode Selector -->
-        <div class="mode-group" style="margin-top: 2rem;">
-          <div class="section-label">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="3"></circle>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-            </svg>
-            Analysis Mode
+        <!-- STEP 4: Analysis Mode Selector -->
+        <section class="form-section">
+          <div class="section-header">
+            <div class="step-num">4</div>
+            <div>
+              <h2 class="section-title">AI Analysis Pipeline</h2>
+              <p class="section-desc">Select the feature extraction and scoring model architecture.</p>
+            </div>
           </div>
 
           <div class="mode-options">
@@ -298,11 +344,14 @@
               <input type="radio" name="mode" value="multimodal" checked>
               <div class="mode-box">
                 <div class="mode-header">
-                  <span class="mode-title">Visual + Speech (Multimodal)</span>
+                  <div class="mode-title-wrap">
+                    <span class="mode-icon">🧠</span>
+                    <span class="mode-title">Visual + Speech (Multimodal)</span>
+                  </div>
                   <span class="badge-recommended">Recommended</span>
                 </div>
                 <div class="mode-desc">
-                  Combines ResNet-50 visual features with candidate-only faster-whisper speech transcript embeddings (MiniLM-L6-v2).
+                  Combines pretrained ResNet-50 visual features with candidate-only faster-whisper speech transcripts and MiniLM sentence embeddings.
                 </div>
               </div>
             </label>
@@ -312,53 +361,78 @@
               <input type="radio" name="mode" value="baseline">
               <div class="mode-box">
                 <div class="mode-header">
-                  <span class="mode-title">Visual Analysis Only (Baseline)</span>
+                  <div class="mode-title-wrap">
+                    <span class="mode-icon">👁️</span>
+                    <span class="mode-title">Visual Analysis Only (Baseline)</span>
+                  </div>
                 </div>
                 <div class="mode-desc">
-                  Uses pretrained ResNet-50 2048-D visual features and the verified baseline Bidirectional LSTM model.
+                  Uses pretrained ResNet-50 2048-D visual features and the verified baseline Bidirectional LSTM sequence model.
                 </div>
               </div>
             </label>
           </div>
-        </div>
+        </section>
 
-        <!-- Optional Gemini API Key for Enhanced Virality (Opus Clip Style) -->
-        <div class="virality-api-box" style="margin-top: 2rem; background: rgba(15, 23, 42, 0.4); border: 1px dashed rgba(56, 189, 248, 0.35); border-radius: var(--radius-md); padding: 1.25rem;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-              <span style="font-size: 1.1rem;">✨</span>
-              <span style="font-weight: 700; color: #fff; font-size: 0.95rem;">AI Virality Engine (Optional)</span>
+        <!-- STEP 5: AI Virality Engine (Optional) -->
+        <section class="form-section virality-section">
+          <div class="virality-box">
+            <div class="virality-header">
+              <div class="virality-title-group">
+                <span class="sparkle-icon">✨</span>
+                <div>
+                  <h3 class="virality-title">AI Virality Engine (Optional)</h3>
+                  <p class="virality-subtitle">
+                    Dual Engine: Paste a free Gemini API Key for viral titles, or leave blank to use built-in Offline NLP.
+                  </p>
+                </div>
+              </div>
+              <span class="virality-badge">Gemini or Offline NLP</span>
             </div>
-            <span style="font-size: 0.75rem; background: rgba(56, 189, 248, 0.15); color: var(--accent-cyan); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600;">
-              Dual-Engine: Gemini or Offline NLP
-            </span>
+
+            <div class="virality-input-wrap">
+              <input 
+                type="password" 
+                name="gemini_api_key" 
+                id="geminiApiKey"
+                class="virality-input"
+                placeholder="Paste Google Gemini API Key (Optional — Leave blank for Offline NLP)" 
+                autocomplete="off"
+              >
+              <button type="button" class="btn-toggle-key" onclick="toggleKeyVisibility()" title="Show/Hide API Key">
+                👁️
+              </button>
+            </div>
+            <p class="virality-hint">
+              Zero configuration required! If left empty, the pipeline uses our high-speed rule-based NLP engine locally with zero external calls.
+            </p>
           </div>
-          <p style="font-size: 0.84rem; color: var(--text-secondary); margin-bottom: 0.75rem; line-height: 1.45;">
-            Paste a free <strong style="color: #fff;">Gemini API key</strong> for creative social media titles and viral reasoning. If left empty, the system automatically uses the <strong style="color: var(--accent-cyan);">built-in offline NLP engine</strong> with zero external API calls.
-          </p>
-          <input 
-            type="password" 
-            name="gemini_api_key" 
-            placeholder="Paste Gemini API Key (Optional — Leave blank for Offline NLP)" 
-            autocomplete="off"
-            style="width: 100%; padding: 0.65rem 0.9rem; background: rgba(3, 7, 18, 0.6); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: #fff; font-size: 0.88rem; outline: none; transition: border-color 0.2s;"
-            onfocus="this.style.borderColor='var(--accent-cyan)'"
-            onblur="this.style.borderColor='var(--border-color)'"
-          >
+        </section>
+
+        <!-- SUBMIT ACTION -->
+        <div class="form-action">
+          <button type="submit" id="submitBtn" class="btn-primary">
+            <svg class="btn-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            <span id="submitBtnText">Generate Viral Reels (9:16)</span>
+          </button>
+          <div class="action-footer-note">
+            <span>⚡ Hardware Accelerated with PyTorch CUDA</span>
+            <span>•</span>
+            <span>Fast Candidate Whisper & YuNet</span>
+          </div>
         </div>
-        <button type="submit" id="submitBtn" class="btn-primary" style="margin-top: 2.5rem;">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="5 3 19 12 5 21 5 3"></polygon>
-          </svg>
-          <span id="submitBtnText">Generate Reels (9:16)</span>
-        </button>
 
       </form>
     </div>
   </main>
 
   <footer>
-    <p>Automatic Video Highlight Detection & Short Video Generation • ResNet-50 + Whisper + BiLSTM</p>
+    <div class="footer-container">
+      <p>Automatic Video Highlight Detection & Short Video Generation</p>
+      <p class="footer-sub">Deep Multimodal Bi-LSTM Architecture with Pretrained ResNet-50 & Faster-Whisper</p>
+    </div>
   </footer>
 
   <script src="{{ url_for('static', filename='js/script.js') }}"></script>
